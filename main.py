@@ -55,11 +55,20 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     :return: The Tensor for the last layer of output
     """
     conv_1x1 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, padding='same', 
-    	kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
-    output = tf.layers.conv2d_transpose(conv_1x1, num_classes, 4, 2, padding='same', 
-    	kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    up1 = tf.layers.conv2d_transpose(conv_1x1, 512, 4, (2,2), padding='same', 
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
 
-    return None
+    sum1 = vgg_layer4_out + up1
+
+    up2 = tf.layers.conv2d_transpose(sum1, 256, 4, (2,2), padding='same', 
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    sum1 = vgg_layer3_out + up2
+
+    up3 =  tf.layers.conv2d_transpose(sum1, num_classes, 16, strides=(8, 8), padding='same')
+    #logits = tf.reshape(up3, (-1, num_classes))
+    return up3
 tests.test_layers(layers)
 
 
@@ -73,6 +82,9 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
     :return: Tuple of (logits, train_op, cross_entropy_loss)
     """
     # TODO: Implement function
+    
+
+
     return None, None, None
 tests.test_optimize(optimize)
 
@@ -95,9 +107,9 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     # TODO: Implement function
     
     for epoch in epochs:
-    	for image, label in get_batches_fn(batch_size):
-    		# Training
-    		pass
+        for image, label in get_batches_fn(batch_size):
+            # Training
+            pass
 
 
 tests.test_train_nn(train_nn)
@@ -117,7 +129,7 @@ def run():
     # You'll need a GPU with at least 10 teraFLOPS to train on.
     #  https://www.cityscapes-dataset.com/
 
-    #with tf.Session() as sess:
+    with tf.Session() as sess:
         # Path to vgg model
     #    vgg_path = os.path.join(data_dir, 'vgg')
         # Create function to get batches
