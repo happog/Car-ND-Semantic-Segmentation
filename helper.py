@@ -10,7 +10,9 @@ import tensorflow as tf
 from glob import glob
 from urllib.request import urlretrieve
 from tqdm import tqdm
-
+import copy
+import cv2
+import random
 
 class DLProgress(tqdm):
     last_block = 0
@@ -85,6 +87,9 @@ def gen_batch_function(data_folder, image_shape):
                 gt_image_file = label_paths[os.path.basename(image_file)]
 
                 image = scipy.misc.imresize(scipy.misc.imread(image_file), image_shape)
+                # Augmentation: Normalization, random gamma correction
+                image = adjust_gamma(image, random.uniform(0.5, 1.0))
+                
                 gt_image = scipy.misc.imresize(scipy.misc.imread(gt_image_file), image_shape)
 
                 gt_bg = np.all(gt_image == background_color, axis=2)
@@ -97,6 +102,16 @@ def gen_batch_function(data_folder, image_shape):
             yield np.array(images), np.array(gt_images)
     return get_batches_fn
 
+# Source http://www.pyimagesearch.com/2015/10/05/opencv-gamma-correction/
+def adjust_gamma(image, gamma=1.0):
+    # build a lookup table mapping the pixel values [0, 255] to
+    # their adjusted gamma values
+    invGamma = 1.0 / gamma
+    table = np.array([((i / 255.0) ** invGamma) * 255
+        for i in np.arange(0, 256)]).astype("float32")
+ 
+    # apply gamma correction using the lookup table
+    return cv2.LUT(image, table)
 
 def gen_test_output(sess, logits, keep_prob, image_pl, data_folder, image_shape):
     """

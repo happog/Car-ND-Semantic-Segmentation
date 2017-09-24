@@ -56,12 +56,10 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     :return: The Tensor for the last layer of output
     """
     conv_1x1 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, padding='same', 
-        activation='relu', 
         kernel_initializer=tf.contrib.layers.xavier_initializer(),
         kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
     #conv_1x1 = tf.nn.relu(conv_1x1)
     up1 = tf.layers.conv2d_transpose(conv_1x1, 512, 4, (2,2), padding='same', 
-        activation='relu', 
         kernel_initializer=tf.contrib.layers.xavier_initializer(),
         kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
 
@@ -69,14 +67,12 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     #sum1 = tf.nn.relu(sum1)
 
     up2 = tf.layers.conv2d_transpose(sum1, 256, 4, (2,2), padding='same', 
-        activation='relu', 
         kernel_initializer=tf.contrib.layers.xavier_initializer(),
         kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
 
     sum2 = vgg_layer3_out + up2
     #sum2 = tf.nn.relu(sum2)
     up3 =  tf.layers.conv2d_transpose(sum2, num_classes, 8, strides=(8, 8), padding='same',
-        activation='relu', 
         kernel_initializer=tf.contrib.layers.xavier_initializer(),
         kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
     #up3 = tf.nn.relu(up3)
@@ -129,7 +125,7 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
         for image, label in get_batches_fn(batch_size):
             # Training
             _, loss = sess.run([train_op, cross_entropy_loss], 
-                feed_dict={input_image: image, correct_label: label, keep_prob: 0.8})
+                feed_dict={input_image: image, correct_label: label, keep_prob: 0.9})
             train_loss += loss
             i += 1
             print (i)
@@ -167,7 +163,7 @@ def run():
         logits, train_op, cross_entropy_loss = optimize(layer_output, correct_label, 0.001, num_classes)
         # TODO: Train NN using the train_nn function
         train_nn(sess, epochs=20, 
-            batch_size=5, 
+            batch_size=20, 
             get_batches_fn=get_batches_fn, 
             train_op=train_op, 
             cross_entropy_loss=cross_entropy_loss, 
