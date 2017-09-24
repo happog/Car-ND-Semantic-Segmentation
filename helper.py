@@ -87,8 +87,9 @@ def gen_batch_function(data_folder, image_shape):
                 gt_image_file = label_paths[os.path.basename(image_file)]
 
                 image = scipy.misc.imresize(scipy.misc.imread(image_file), image_shape)
-                # Augmentation: Normalization, random gamma correction
-                image = adjust_gamma(image, random.uniform(0.5, 1.0))
+                # Augmentation: random gamma correction
+                if random.randint(0, 2):
+                    image = adjust_gamma(image, random.uniform(0.5, 1.0))
                 
                 gt_image = scipy.misc.imresize(scipy.misc.imread(gt_image_file), image_shape)
 
