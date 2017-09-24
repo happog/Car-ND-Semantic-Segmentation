@@ -162,8 +162,8 @@ def run():
         correct_label = tf.placeholder(dtype=tf.float32, shape=(None, 160, 576, 2))
         logits, train_op, cross_entropy_loss = optimize(layer_output, correct_label, 0.001, num_classes)
         # TODO: Train NN using the train_nn function
-        train_nn(sess, epochs=15, 
-            batch_size=6, 
+        train_nn(sess, epochs=60, 
+            batch_size=20, 
             get_batches_fn=get_batches_fn, 
             train_op=train_op, 
             cross_entropy_loss=cross_entropy_loss, 
