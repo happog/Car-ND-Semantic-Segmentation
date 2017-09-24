@@ -56,19 +56,30 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     :return: The Tensor for the last layer of output
     """
     conv_1x1 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, padding='same', 
+        activation='relu', 
+        kernel_initializer=tf.contrib.layers.xavier_initializer(),
         kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    #conv_1x1 = tf.nn.relu(conv_1x1)
     up1 = tf.layers.conv2d_transpose(conv_1x1, 512, 4, (2,2), padding='same', 
+        activation='relu', 
+        kernel_initializer=tf.contrib.layers.xavier_initializer(),
         kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
 
     sum1 = vgg_layer4_out + up1
+    #sum1 = tf.nn.relu(sum1)
 
     up2 = tf.layers.conv2d_transpose(sum1, 256, 4, (2,2), padding='same', 
+        activation='relu', 
+        kernel_initializer=tf.contrib.layers.xavier_initializer(),
         kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
 
-    sum1 = vgg_layer3_out + up2
-
-    up3 =  tf.layers.conv2d_transpose(sum1, num_classes, 16, strides=(8, 8), padding='same')
-    
+    sum2 = vgg_layer3_out + up2
+    #sum2 = tf.nn.relu(sum2)
+    up3 =  tf.layers.conv2d_transpose(sum2, num_classes, 8, strides=(8, 8), padding='same',
+        activation='relu', 
+        kernel_initializer=tf.contrib.layers.xavier_initializer(),
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    #up3 = tf.nn.relu(up3)
     return up3
 tests.test_layers(layers)
 
@@ -86,7 +97,7 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
 
     correct_label = tf.reshape(correct_label, (-1, num_classes))
     logits = tf.reshape(nn_last_layer, (-1, num_classes))
-    loss = tf.nn.softmax_cross_entropy_with_logits(labels=correct_label, logits=logits)
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=correct_label, logits=logits))
     train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
     return logits, train_op, loss
@@ -109,12 +120,20 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     :param learning_rate: TF Placeholder for learning rate
     """
     # TODO: Implement function
-    
+    sess.run(tf.global_variables_initializer())
+
     for epoch in range(epochs):
+        print ('epoch', epoch)
+        i=0
+        train_loss = 0
         for image, label in get_batches_fn(batch_size):
             # Training
-            sess.run([train_op, cross_entropy_loss], feed_dict={input_image: image, correct_label: label, keep_prob: 0.9})
-
+            _, loss = sess.run([train_op, cross_entropy_loss], 
+                feed_dict={input_image: image, correct_label: label, keep_prob: 0.8})
+            train_loss += loss
+            i += 1
+            print (i)
+        print ('train loss', train_loss)
 
 tests.test_train_nn(train_nn)
 
@@ -147,8 +166,8 @@ def run():
         correct_label = tf.placeholder(dtype=tf.float32, shape=(None, 160, 576, 2))
         logits, train_op, cross_entropy_loss = optimize(layer_output, correct_label, 0.001, num_classes)
         # TODO: Train NN using the train_nn function
-        train_nn(sess, epochs=1, 
-            batch_size=1, 
+        train_nn(sess, epochs=20, 
+            batch_size=5, 
             get_batches_fn=get_batches_fn, 
             train_op=train_op, 
             cross_entropy_loss=cross_entropy_loss, 
